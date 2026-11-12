@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>表とグラフ プリント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style id="pageCss">
+.page{width:210mm;height:297mm;padding:5mm 5mm 5mm 15mm;box-sizing:border-box;background:#fff;color:#000;font-family:'BIZ UDPGothic',sans-serif;font-size:12pt;line-height:var(--lh,1.85);overflow:hidden;position:relative}
+.page *{box-sizing:border-box}
+.sheet{height:100%;overflow:hidden}
+.page rt{font-size:6pt;font-weight:400}
+.nm{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:1mm}
+.nm .no{font-size:12pt}
+.nm .nr{display:flex;align-items:flex-end;gap:2mm}
+.nm .line{display:inline-block;width:70mm;height:9mm;border-bottom:0.3mm solid #000}
+.lead{margin:0 0 1mm}
+.cap{font-weight:700;margin-top:1.5mm}
+table.tb{border-collapse:collapse;width:100%;table-layout:fixed;line-height:1.5}
+.tb th,.tb td{border:0.3mm solid #000;padding:0.5mm 0.3mm;text-align:center;font-weight:400;vertical-align:middle;word-break:break-all}
+.tb th{background:#e4e4e4}
+.q{margin-top:var(--gap,3mm)}
+.qt{padding-left:3em;text-indent:-3em}
+.bl{white-space:nowrap}
+.opts{display:flex;flex-wrap:wrap;gap:0 9mm;padding-left:3em}
+.opts.col{flex-direction:column}
+.lg{display:flex;gap:8mm;justify-content:center;align-items:center}
+.lg svg{width:11mm;height:4mm;vertical-align:middle;margin-right:1mm}
+.graphs{display:flex;gap:3mm;margin-top:0.5mm}
+.graphs .g{flex:1;min-width:0;text-align:center}
+.graphs svg{display:block;width:100%;height:auto;max-height:var(--gh,60mm);margin:0 auto}
+.ansp h2{font-size:14pt;margin:2mm 0 3mm}
+.ansp .al{margin-top:3mm;padding-left:3em;text-indent:-3em}
+.ansp .al b{font-weight:700}
+.ansp .why{display:block;text-indent:0}
+@media print{
+  @page{size:A4;margin:5mm 5mm 5mm 15mm}
+  html,body{margin:0;padding:0;background:#fff}
+  .page{width:auto;height:286mm;padding:0;margin:0;box-shadow:none;break-after:page;page-break-after:always}
+  .page:last-child{break-after:auto;page-break-after:auto}
+  .noprint{display:none!important}
+}
+</style>
+<style>
+html,body{height:100%;margin:0}
+body{font-family:'BIZ UDPGothic',sans-serif;background:#eef4f7;color:#223;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-text-size-adjust:100%;display:flex;flex-direction:column}
+rt{font-size:.5em}
+header{background:#fff;border-bottom:2px solid #9cc7d8;padding:8px 12px;flex:none}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h1{font-size:20px;margin:0 auto 0 0;line-height:2}
+button{font-family:inherit;font-size:16px;min-height:44px;min-width:44px;padding:4px 14px;border-radius:8px;border:2px solid #4a90a8;background:#fff;color:#1d4f60;line-height:1.9;cursor:pointer;touch-action:manipulation}
+button.main{background:#2f7f99;color:#fff;border-color:#2f7f99}
+button.on{background:#d5edf5;border-color:#2f7f99;font-weight:700}
+#panel{margin-top:8px;display:grid;gap:6px}
+#panel.hide{display:none}
+.row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.row>.lb{width:7em;font-weight:700;line-height:1.9}
+.stp{display:flex;align-items:center;gap:4px}
+.stp input{width:56px;height:44px;font-size:20px;text-align:center;border:2px solid #4a90a8;border-radius:8px;font-family:inherit;-webkit-user-select:text;user-select:text}
+.sub{font-size:14px;color:#456;line-height:1.9}
+#msg{min-height:1.9em;font-size:15px;color:#1d4f60;line-height:1.9;font-weight:700}
+#pv{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:10px 8px 40px}
+#scaler{transform-origin:0 0}
+#pages .page{margin:0 0 6mm;box-shadow:0 1px 6px rgba(0,0,0,.25)}
+#pages [contenteditable]{-webkit-user-select:text;user-select:text;outline:none}
+#pages [contenteditable]:focus{background:#fff6c9}
+.warn{position:absolute;left:15mm;right:5mm;bottom:2mm;background:#fff;border:0.6mm solid #b35b00;color:#7a3e00;padding:1mm 2mm;font-size:11pt;line-height:1.9}
+@media print{header{display:none}body{display:block;overflow:visible}#pv{overflow:visible;padding:0}#scaler{transform:none!important;width:auto!important;margin:0!important}#pvh{height:auto!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1 data-r="{表|ひょう}とグラフ プリント"></h1>
+    <button id="bSet" data-r="{設定|せってい}"></button>
+    <button id="bNew" class="main" data-r="{新|あたら}しい{問題|もんだい}を{作|つく}る"></button>
+    <button id="bSave" data-r="{印刷用|いんさつよう}ファイルを{保存|ほぞん}する"></button>
+    <button id="bCopy" data-r="HTMLをコピーする"></button>
+  </div>
+  <div id="panel">
+    <div class="row"><span class="lb">ジャンル</span><span id="gGenre" class="row"></span></div>
+    <div class="row"><span class="lb">レベル</span><span class="stp" id="sLevel"></span><span class="sub" data-r="1：やさしい　2：ふつう　3：むずかしい"></span></div>
+    <div class="row"><span class="lb">グラフ</span><span id="gGraph" class="row"></span></div>
+    <div class="row"><span class="lb" data-r="まい{数|すう}"></span><span class="stp" id="sCount"></span><span class="sub" data-r="1まいごとに、ちがう{問題|もんだい}になるよ"></span></div>
+    <div class="row"><span class="lb" data-r="{答|こた}えのページ"></span><span id="gAns" class="row"></span></div>
+    <div class="sub" data-r="プリントの{文字|もじ}や{数字|すうじ}は、タップすると{直|なお}せるよ。（{数字|すうじ}を{直|なお}しても、グラフと{答|こた}えは{変|か}わらないよ）　{保存|ほぞん}したファイルをブラウザで{開|ひら}いて、「{印刷|いんさつ}する」ボタンをおしてね。"></div>
+  </div>
+  <div id="msg"></div>
+</header>
+<div id="pv"><div id="pvh"><div id="scaler"><div id="pages"></div></div></div></div>
+
+<script>
+/*GEN-START*/
+// ===== 問題を作る部分（画面や印刷とは分けてあるので、ほかのアプリにそのまま写せる） =====
+var rnd=Math.random;
+function ri(a,b){return a+Math.floor(rnd()*(b-a+1));}
+function pick(a){return a[ri(0,a.length-1)];}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=ri(0,i);var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function fmt(v,dec){return (v<0?'−':'')+Math.abs(v).toFixed(dec);}
+function umax(a){var m=Math.max.apply(null,a);return a.filter(function(v){return v===m;}).length===1?a.indexOf(m):-1;}
+function umin(a){var m=Math.min.apply(null,a);return a.filter(function(v){return v===m;}).length===1?a.indexOf(m):-1;}
+function sum(a){return a.reduce(function(x,y){return x+y;},0);}
+function bl(pre,post,n){return pre+'（'+'　'.repeat(n||4)+'）'+post;}
+var SEL='1つ{選|えら}んで、（　）に○を{書|か}いてね。';
+var HYO='【{表|ひょう}】',HYO1='【{表|ひょう}1】',HYO2='【{表|ひょう}2】';
+var TAIL='を{見|み}て、（1）〜（4）の{問題|もんだい}に{答|こた}えてね。';
+var NAMES=['ゆうた','みさき','けんじ','さくら','はると','あおい','そうた','ひなた'];
+var TOWN=['みどり','ひかり','わかば','かえで'],WARM=['みなみ','うみべ','あおば','はまかぜ'],COLD=['きたの','ゆきみ','しらかば','こおり'];
+var HI='{最高気温|さいこうきおん}',LO='{最低気温|さいていきおん}',AV='{平均気温|へいきんきおん}';
+var MOT='{最|もっと}も';
+
+// ---- グラフ（SVG・白黒） ----
+function svgT(x,y,str,o){
+  o=o||{};var size=o.size||9,anchor=o.anchor||'start',segs=[],re=/\{([^|{}]+)\|([^{}]+)\}/g,last=0,m;
+  while((m=re.exec(str))){if(m.index>last)segs.push({t:str.slice(last,m.index)});segs.push({t:m[1],r:m[2]});last=re.lastIndex;}
+  if(last<str.length)segs.push({t:str.slice(last)});
+  function w(t){var n=0;for(var i=0;i<t.length;i++)n+=t.charCodeAt(i)<256?0.56:1;return n*size;}
+  var total=0;segs.forEach(function(s){total+=w(s.t);});
+  var cx=anchor==='middle'?x-total/2:anchor==='end'?x-total:x,out='';
+  segs.forEach(function(s){var sw=w(s.t);
+    out+='<text x="'+(cx+sw/2).toFixed(1)+'" y="'+y+'" font-size="'+size+'" text-anchor="middle">'+s.t+'</text>';
+    if(s.r)out+='<text x="'+(cx+sw/2).toFixed(1)+'" y="'+(y-size*0.95).toFixed(1)+'" font-size="'+(size*0.5)+'" text-anchor="middle">'+s.r+'</text>';
+    cx+=sw;});
+  return out;
+}
+function niceScale(min,max,zero){
+  if(zero&&min>0)min=0;var steps=[1,2,5,10,20,50];
+  for(var k=0;k<steps.length;k++){var s=steps[k],lo=Math.floor(min/s)*s,hi=Math.ceil(max/s)*s;if(hi===lo)hi+=s;
+    if((hi-lo)/s<=8){if((hi-lo)/s<4)hi+=s;return {lo:lo,hi:hi,step:s};}}
+  return {lo:0,hi:Math.ceil(max/100)*100,step:100};
+}
+function chart(o){
+  var vert=o.vert,W=200,H=vert?196:152,L=26,Rm=o.xunit?20:8,Tp=17,B=vert?62:22;
+  var pw=W-L-Rm,ph=H-Tp-B,lo=o.sc.lo,hi=o.sc.hi,step=o.sc.step,n=o.labels.length,slot=pw/n;
+  function Y(v){return Tp+ph*(1-(v-lo)/(hi-lo));}
+  function X(i){return L+slot*(i+0.5);}
+  var s='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+H+'" font-family="\'BIZ UDPGothic\',sans-serif" fill="#000">';
+  s+='<defs><pattern id="hat" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#fff"/><line x1="0" y1="0" x2="0" y2="4" stroke="#000" stroke-width="1.6"/></pattern></defs>';
+  var nt=Math.round((hi-lo)/step);
+  for(var k=0;k<=nt;k++){var v=lo+k*step,y=Y(v).toFixed(1);
+    s+='<line x1="'+L+'" x2="'+(L+pw)+'" y1="'+y+'" y2="'+y+'" stroke="'+(v===0&&lo<0?'#000':'#888')+'" stroke-width="'+(v===0&&lo<0?1:0.5)+'"/>';
+    s+=svgT(L-3,+y+3.2,(v<0?'−':'')+Math.abs(v),{anchor:'end',size:9});}
+  s+='<line x1="'+L+'" x2="'+L+'" y1="'+Tp+'" y2="'+(Tp+ph)+'" stroke="#000" stroke-width="1"/>';
+  s+='<line x1="'+L+'" x2="'+(L+pw)+'" y1="'+(Tp+ph)+'" y2="'+(Tp+ph)+'" stroke="#000" stroke-width="1"/>';
+  s+=svgT(1,10,o.unit,{size:8.5});
+  var m=o.series.length;
+  if(o.type==='bar'){
+    var gw=slot*(m>1?0.78:0.6),bw=gw/m;
+    o.series.forEach(function(a,j){var st=o.swap?1-j:j;a.forEach(function(v,i){var y=Y(v),h=Tp+ph-y;if(h<=0)return;
+      s+='<rect x="'+(X(i)-gw/2+j*bw).toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" fill="'+(st===0?'#555':'url(#hat)')+'" stroke="#000" stroke-width="0.7"/>';});});
+  }else{
+    o.series.forEach(function(a,j){var st=o.swap?1-j:j;
+      s+='<polyline fill="none" stroke="#000" stroke-width="1.4"'+(st===1?' stroke-dasharray="4 2.5"':'')+' points="'+a.map(function(v,i){return X(i).toFixed(1)+','+Y(v).toFixed(1);}).join(' ')+'"/>';
+      a.forEach(function(v,i){var x=X(i),y=Y(v);
+        s+=st===0?'<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.4"/>':'<rect x="'+(x-2.3).toFixed(1)+'" y="'+(y-2.3).toFixed(1)+'" width="4.6" height="4.6" fill="#fff" stroke="#000" stroke-width="1"/>';});});
+  }
+  o.labels.forEach(function(lb,i){
+    if(vert){for(var c=0;c<lb.length;c++){var ch=lb.charAt(c),yy=Tp+ph+11+c*9.6;
+      if(ch==='ー')s+='<text transform="translate('+(X(i)-3.3).toFixed(1)+','+(yy-3.3).toFixed(1)+') rotate(90)" font-size="9" text-anchor="middle">ー</text>';
+      else s+='<text x="'+X(i).toFixed(1)+'" y="'+yy.toFixed(1)+'" font-size="9" text-anchor="middle">'+ch+'</text>';}}
+    else s+=svgT(X(i),Tp+ph+(lb.indexOf('{')>=0?16:11),lb,{anchor:'middle',size:9});
+  });
+  if(o.xunit)s+=svgT(L+pw+1,Tp+ph+11,o.xunit,{size:8.5});
+  return s+'</svg>';
+}
+function legendHTML(names,type){
+  function sw(j){return type==='bar'
+    ?'<svg viewBox="0 0 22 8"><defs><pattern id="hat" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#fff"/><line x1="0" y1="0" x2="0" y2="4" stroke="#000" stroke-width="1.6"/></pattern></defs><rect x="4" y="0.5" width="14" height="7" fill="'+(j===0?'#555':'url(#hat)')+'" stroke="#000" stroke-width="0.7"/></svg>'
+    :'<svg viewBox="0 0 22 8"><line x1="0" x2="22" y1="4" y2="4" stroke="#000" stroke-width="1.4"'+(j===1?' stroke-dasharray="4 2.5"':'')+'/>'+(j===0?'<circle cx="11" cy="4" r="2.4"/>':'<rect x="8.7" y="1.7" width="4.6" height="4.6" fill="#fff" stroke="#000" stroke-width="1"/>')+'</svg>';}
+  return names.map(function(nm,j){return '<span>'+sw(j)+nm+'</span>';});
+}
+// 正しいグラフ1つと、1か所だけちがうグラフ2つを作る
+function graphQ(o){
+  var all=[].concat.apply([],o.series),neg=Math.min.apply(null,all)<0,type=(o.type==='bar'&&!neg)?'bar':'line';
+  var sc=niceScale(Math.min.apply(null,all),Math.max.apply(null,all),type==='bar'||o.zero);
+  var ks=o.L===1?[2,3]:o.L===2?[1.5,2]:[1,1.5],vs=[{series:o.series,swap:false,ok:true}],used={},guard=0;
+  if(o.series.length===2&&o.L===3)vs.push({series:o.series,swap:true});
+  while(vs.length<3&&guard++<300){
+    var j=ri(0,o.series.length-1),i=ri(0,o.series[0].length-1);if(used[j+'_'+i])continue;
+    var d=pick(ks)*sc.step*(rnd()<0.5?1:-1),v=o.series[j][i]+d;
+    if(v<sc.lo||v>sc.hi)v=o.series[j][i]-d;
+    if(v<sc.lo||v>sc.hi)continue;
+    used[j+'_'+i]=1;var ns=o.series.map(function(a){return a.slice();});ns[j][i]=v;vs.push({series:ns,swap:false});
+  }
+  if(vs.length<3)return null;
+  vs=shuffle(vs);var pos=0;vs.forEach(function(x,k){if(x.ok)pos=k;});
+  return {type:type,pos:pos,
+    svgs:vs.map(function(x){return chart({type:type,labels:o.labels,series:x.series,swap:x.swap,unit:o.unit,xunit:o.xunit,sc:sc,vert:o.vert});}),
+    ans:'{左|ひだり}から'+(pos+1)+'{番目|ばんめ}のグラフ'};
+}
+// 正しい文1つと、まちがいの文2つを組み合わせる
+function statements(cands){
+  var tr=cands.filter(function(c){return c.T;});if(!tr.length)return null;
+  var t=pick(tr),fs=shuffle(cands.filter(function(c){return c!==t&&c.F;})).slice(0,2);if(fs.length<2)return null;
+  var list=shuffle([{s:t.T,ok:true},{s:fs[0].F},{s:fs[1].F}]),pos=0;list.forEach(function(x,k){if(x.ok)pos=k;});
+  return {opts:list.map(function(x){return x.s;}),pos:pos};
+}
+
+// ---- ジャンル1：気温（月ごと） ----
+function genMonthly(L,gt){
+  var town=pick(TOWN)+'{市|し}',dec=L>=2?1:0,sc=dec?10:1;
+  var months=L===1?pick([[1,2,3,4,5,6],[4,5,6,7,8,9],[7,8,9,10,11,12]]):[1,2,3,4,5,6,7,8,9,10,11,12];
+  var lo=ri(3,8),hi=ri(25,30),n=months.length;
+  var avg=months.map(function(m){return Math.round(((lo+hi)/2-(hi-lo)/2*Math.cos((m-1.6)/12*2*Math.PI)+(rnd()*3-1.5))*sc);});
+  var mx=avg.map(function(v){return v+Math.round((4+rnd()*3)*sc);}),mn=avg.map(function(v){return v-Math.round((3+rnd()*2.5)*sc);});
+  if(L===3){var bi=0;mn.forEach(function(v,i){if(Math.abs(v-100)<Math.abs(mn[bi]-100))bi=i;});if(avg[bi]<=110)return null;mn[bi]=100;}
+  function f(v){return fmt(v/sc,dec);}
+  var iMx=umax(mx),iMn=umin(mn),iAL=umin(avg),iAH=umax(avg);if(iMx<0||iMn<0||iAL<0||iAH<0)return null;
+  var rows=[[HI+'（℃）'].concat(mx.map(f)),[LO+'（℃）'].concat(mn.map(f))];if(L>=2)rows.push([AV+'（℃）'].concat(avg.map(f)));
+  var qs=[],ans=[];
+  if(rnd()<0.5){qs.push({t:HI+'が'+MOT+'{高|たか}かったのは、{何|なん}月かな。',a:bl('','月')});ans.push({a:months[iMx]+'月',w:HI+'は'+f(mx[iMx])+'℃'});}
+  else{qs.push({t:LO+'が'+MOT+'{低|ひく}かったのは、{何|なん}月かな。',a:bl('','月')});ans.push({a:months[iMn]+'月',w:LO+'は'+f(mn[iMn])+'℃'});}
+  if(L===1){var a=ri(0,n-1),b=ri(0,n-1);if(a===b||mx[a]===mx[b])return null;if(a>b){var t=a;a=b;b=t;}
+    qs.push({t:months[a]+'月と'+months[b]+'月の'+HI+'の{差|さ}は、{何|なん}℃かな。',a:bl('','℃')});
+    ans.push({a:f(Math.abs(mx[a]-mx[b]))+'℃',w:f(Math.max(mx[a],mx[b]))+'−'+f(Math.min(mx[a],mx[b]))});}
+  else if(rnd()<0.5){qs.push({t:AV+'が'+MOT+'{低|ひく}かった月の'+LO+'は、{何|なん}℃かな。',a:bl('','℃')});ans.push({a:f(mn[iAL])+'℃',w:AV+'が'+MOT+'{低|ひく}いのは'+months[iAL]+'月'});}
+  else{qs.push({t:AV+'が'+MOT+'{高|たか}かった月の'+HI+'は、{何|なん}℃かな。',a:bl('','℃')});ans.push({a:f(mx[iAH])+'℃',w:AV+'が'+MOT+'{高|たか}いのは'+months[iAH]+'月'});}
+  if(L===1){var Ts=[10,15,20,25,30].filter(function(T){var c=mx.filter(function(v){return v>=T;}).length;return c>=1&&c<n&&mx.indexOf(T)<0;});if(!Ts.length)return null;var T=pick(Ts);
+    qs.push({t:HI+'が'+T+'℃{以上|いじょう}だった月は、{何|なん}か月あるかな。',a:bl('','か月')});
+    ans.push({a:mx.filter(function(v){return v>=T;}).length+'か月',w:months.filter(function(m,i){return mx[i]>=T;}).map(function(m){return m+'月';}).join('、')});}
+  else if(L===2){var df=mx.map(function(v,i){return v-mn[i];}),id=umin(df);if(id<0)return null;
+    var os=shuffle(months.filter(function(m,i){return i!==id;})).slice(0,3).concat([months[id]]).sort(function(x,y){return x-y;});
+    qs.push({t:HI+'と'+LO+'の{差|さ}が'+MOT+'{小|ちい}さいのは、{何|なん}月かな。'+SEL,opts:os.map(function(m){return m+'月';})});
+    ans.push({a:months[id]+'月',w:'{差|さ}は'+f(df[id])+'℃'});}
+  else{var c=mn.filter(function(v){return v<100;}).length;if(c<1||c>=n)return null;
+    qs.push({t:LO+'が10℃{未満|みまん}だった月は、{何|なん}か月あるかな。',a:bl('','か月')});
+    ans.push({a:c+'か月',w:'10.0℃の月は「10℃{未満|みまん}」に{入|はい}らないよ'});}
+  var gs=L===1?mx:avg,g=graphQ({type:gt==='bar'?'bar':'line',labels:months.map(String),series:[gs.map(function(v){return v/sc;})],unit:'（℃）',xunit:'（月）',L:L,zero:true});if(!g)return null;
+  qs.push({t:HYO+'の'+(L===1?HI:AV)+'をグラフにしたよ。{正|ただ}しいグラフを'+SEL,graphs:g.svgs});ans.push({a:g.ans,w:''});
+  return {genre:'{気温|きおん}（{月|つき}ごと）',
+    lead:'{次|つぎ}の'+HYO+'は、ある{年|とし}の'+town+'の'+months[0]+'月から'+months[n-1]+'月までの{気温|きおん}を{表|あらわ}しています。'+HYO+TAIL,
+    tables:[{cap:HYO+town+'の{気温|きおん}',lbw:31,head:[''].concat(months.map(function(m){return m+'月';})),rows:rows}],qs:qs,ans:ans};
+}
+
+// ---- ジャンル2：気温（2つの市・1週間） ----
+function genTwoTowns(L,gt){
+  var A=pick(WARM)+'{市|し}',B=pick(COLD)+'{市|し}',sc=L===1?1:10,dec=L===1?0:1,dim={1:31,2:28,4:30,5:31,12:31};
+  var st=L===1?pick([[4,8],[4,26],[5,12]]):pick([[12,28],[1,10],[2,3],[1,27]]),ds=[],m=st[0],d=st[1];
+  for(var i=0;i<7;i++){ds.push({m:m,d:d});d++;if(d>dim[m]){d=1;m=m===12?1:m+1;}}
+  var labels=ds.map(function(x,i){return i===0||x.d===1?x.m+'/'+x.d:String(x.d);});
+  function dn(i){return ds[i].m+'月'+ds[i].d+'日';}
+  var aMx=[],aMn=[],bMx=[],bMn=[];
+  for(i=0;i<7;i++){if(L===1){aMx.push(ri(17,26));aMn.push(aMx[i]-ri(6,10));bMx.push(ri(9,17));bMn.push(bMx[i]-ri(5,9));}
+    else{aMx.push(ri(50,135));aMn.push(aMx[i]-ri(30,70));bMx.push(ri(-30,50));bMn.push(bMx[i]-ri(25,70));}}
+  if(L===3){var bi=0;bMx.forEach(function(v,k){if(Math.abs(v)<Math.abs(bMx[bi]))bi=k;});bMx[bi]=0;bMn[bi]=-ri(25,70);}
+  function f(v){return fmt(v/sc,dec);}
+  var iA=umax(aMx),iAn=umin(aMn),iBn=umin(bMn);if(iA<0||iAn<0||iBn<0)return null;
+  var S='{晴|は}れ',C='くもり',RA='{雨|あめ}',SN='{雪|ゆき}',N='{後|のち}',TK='{時々|ときどき}',IC='{一時|いちじ}';
+  var poolA=[S,C,S,C,RA,S+TK+'¦'+C,C+IC+'¦'+RA,C+TK+'¦'+S],comp=[S+N+'¦'+C,C+N+'¦'+RA,C+N+'¦'+S],target=pick(comp);
+  var poolB=L===1?poolA:[C,SN,C,SN,S,SN+N+'¦'+C,C+IC+'¦'+SN,SN+N+'¦'+S];
+  var wA=[],wB=[],ti=ri(0,6);for(i=0;i<7;i++){wA.push(i===ti?target:pick(poolA));wB.push(pick(poolB));}
+  function cell(w){return w.replace('¦','<br>');}function pl(w){return w.replace('¦','');}
+  var tA=wA.map(cell),tB=wB.map(cell);wA=wA.map(pl);wB=wB.map(pl);target=pl(target);
+  var qs=[],ans=[];
+  qs.push({t:HYO1+'より、{天気|てんき}が「'+target+'」だったのは、{何|なん}月{何|なん}日かな。',a:bl('','月',2)+bl('','日',2)});ans.push({a:dn(ti),w:''});
+  if(L===1){var k=ri(0,6);if(aMx[k]===bMx[k])return null;
+    qs.push({t:dn(k)+'の'+HI+'は、どちらの{市|し}が{何|なん}℃{高|たか}いかな。',a:bl('','の{方|ほう}が',5)+bl('','℃{高|たか}い',3)});
+    ans.push({a:(aMx[k]>bMx[k]?A:B)+'の{方|ほう}が'+f(Math.abs(aMx[k]-bMx[k]))+'℃{高|たか}い',w:''});}
+  else{var c0=bMx.filter(function(v){return v<=0;}).length;if(c0<1||c0>5)return null;
+    qs.push({t:HYO2+'より、'+HI+'と'+LO+'が、どちらも0℃{以下|いか}だった日は、{何|なん}日あるかな。',a:bl('','日',3)});
+    ans.push({a:c0+'日',w:ds.map(function(x,i){return i;}).filter(function(i){return bMx[i]<=0;}).map(dn).join('、')+(bMx.indexOf(0)>=0?'（0.0℃は「0℃{以下|いか}」に{入|はい}るよ）':'')});}
+  var g=graphQ({type:gt==='bar'?'bar':'line',labels:labels,series:[aMx.map(function(v){return v/sc;}),bMx.map(function(v){return v/sc;})],unit:'（℃）',xunit:'（日）',L:L});if(!g)return null;
+  qs.push({t:'2つの{市|し}の'+HI+'をグラフにしたよ。{正|ただ}しいグラフを'+SEL,graphs:g.svgs,legend:legendHTML([A,B],g.type)});ans.push({a:g.ans,w:''});
+  if(L===1){var df=aMx.map(function(v,i){return Math.abs(v-bMx[i]);}),id=umax(df);if(id<0)return null;
+    qs.push({t:'2つの{市|し}の'+HI+'の{差|さ}が'+MOT+'{大|おお}きかったのは、{何|なん}月{何|なん}日かな。',a:bl('','月',2)+bl('','日',2)});ans.push({a:dn(id),w:'{差|さ}は'+f(df[id])+'℃'});}
+  else{var other=wA.filter(function(w){return w!==wA[iA];}),nT=bMx.filter(function(v){return v<0;}).length,nF=c0!==nT?c0:nT+1,allNeg=bMn.every(function(v){return v<0;});
+    var st2=statements([
+      {T:A+'の'+HI+'が'+MOT+'{高|たか}かった{日|ひ}の{天気|てんき}は、「'+wA[iA]+'」だった。',F:other.length?A+'の'+HI+'が'+MOT+'{高|たか}かった{日|ひ}の{天気|てんき}は、「'+pick(other)+'」だった。':null},
+      {T:iAn===iBn?A+'も'+B+'も、'+LO+'が'+MOT+'{低|ひく}かったのは'+dn(iAn)+'だった。':null,F:iAn!==iBn?A+'も'+B+'も、'+LO+'が'+MOT+'{低|ひく}かったのは'+dn(iAn)+'だった。':null},
+      {T:B+'では、'+HI+'が0℃{未満|みまん}の日が'+nT+'日あった。',F:B+'では、'+HI+'が0℃{未満|みまん}の日が'+nF+'日あった。'},
+      {T:allNeg?B+'の'+LO+'は、1{週間|しゅうかん}ずっと0℃{未満|みまん}だった。':null,F:allNeg?null:B+'の'+LO+'は、1{週間|しゅうかん}ずっと0℃{未満|みまん}だった。'}]);
+    if(!st2)return null;
+    qs.push({t:'2つの{表|ひょう}から{読|よ}み{取|と}れることとして、{正|ただ}しいものを'+SEL,opts:st2.opts,col:true});ans.push({a:'{上|うえ}から'+(st2.pos+1)+'{番目|ばんめ}',w:''});}
+  var head=['{日|ひ}にち'].concat(labels);
+  return {genre:'{気温|きおん}（2つの{市|し}）',
+    lead:HYO1+'と'+HYO2+'は、'+A+'と'+B+'の1{週間|しゅうかん}の{天気|てんき}と{気温|きおん}を{調|しら}べたものです。2つの{表|ひょう}'+TAIL,
+    tables:[{cap:HYO1+A+'の{天気|てんき}と{気温|きおん}',lbw:31,head:head,rows:[['{天気|てんき}'].concat(tA),[HI+'（℃）'].concat(aMx.map(f)),[LO+'（℃）'].concat(aMn.map(f))]},
+            {cap:HYO2+B+'の{天気|てんき}と{気温|きおん}',lbw:31,head:head,rows:[['{天気|てんき}'].concat(tB),[HI+'（℃）'].concat(bMx.map(f)),[LO+'（℃）'].concat(bMn.map(f))]}],qs:qs,ans:ans};
+}
+
+// ---- ジャンル3：数の記録（月ごと×種類） ----
+var REC=[
+  {lead:function(nm){return nm+'さんの{学校|がっこう}では、{毎月|まいつき}リサイクルできるものを{集|あつ}めています。{次|つぎ}の'+HYO+'は、{集|あつ}まった{数|かず}を、{種類|しゅるい}ごとに{記録|きろく}したものです。';},cap:'{集|あつ}まった{数|かず}',items:['ペットボトル','アルミかん','びん','スチールかん'],unit:'{個|こ}',verb:'{集|あつ}まった',lbw:38},
+  {lead:function(nm){return nm+'さんは{図書委員|としょいいん}です。{次|つぎ}の'+HYO+'は、{図書室|としょしつ}で{貸|か}し{出|だ}された{本|ほん}の{数|かず}を、{種類|しゅるい}ごとに{記録|きろく}したものです。';},cap:'{貸|か}し{出|だ}された{本|ほん}の{数|かず}',items:['{物語|ものがたり}','{図|ず}かん','まんが','{絵本|えほん}'],unit:'{冊|さつ}',verb:'{貸|か}し{出|だ}された',lbw:30},
+  {lead:function(nm){return nm+'さんは、{月|つき}に1{回|かい}、{公園|こうえん}で{生|い}き{物|もの}をさがしています。{次|つぎ}の'+HYO+'は、{見|み}つかった{数|かず}を、{種類|しゅるい}ごとに{記録|きろく}したものです。';},cap:'{見|み}つかった{生|い}き{物|もの}の{数|かず}',items:['チョウ','バッタ','ダンゴムシ','トンボ'],unit:'ひき',verb:'{見|み}つかった',lbw:34}];
+function genRecord(L,gt){
+  var th=pick(REC),months=L===1?[4,5,6,7,8,9]:[4,5,6,7,8,9,10,11,12,1,2,3],n=months.length,ni=L===1?3:4,items=th.items.slice(0,ni),u=th.unit,vb=th.verb;
+  var v=[[],[],[],[]],i,k;
+  for(i=0;i<n;i++){v[0].push(ri(8,38));v[1].push(ri(2,22));v[2].push(L===3?ri(0,12):ri(1,12));v[3].push(0);}
+  var bs=0,be=0;if(ni===4){var len=ri(4,6);bs=ri(0,n-len);be=bs+len-1;for(i=bs;i<=be;i++)v[3][i]=ri(1,9);}
+  v=v.slice(0,ni);
+  var T=0;if(L===2){T=pick([10,15,20]);v[0][ri(0,n-1)]=T;}
+  function col(i){return v.map(function(a){return a[i];});}
+  var qs=[],ans=[];
+  k=ri(0,n-1);var im=umax(col(k));if(im<0)return null;
+  qs.push({t:months[k]+'月に、'+MOT+'{多|おお}く'+vb+'のは、{何|なに}かな。',a:bl('','',6)});ans.push({a:items[im],w:v[im][k]+u});
+  var sums=months.map(function(m,i){return sum(col(i));});
+  if(L===1){var k2=ri(0,n-1);if(k2===k)return null;
+    qs.push({t:months[k2]+'月に'+vb+'{数|かず}の{合計|ごうけい}は、いくつかな。',a:bl('',u)});ans.push({a:sums[k2]+u,w:col(k2).join('＋')});}
+  else{var mostq=rnd()<0.5,is=mostq?umax(sums):umin(sums);if(is<0)return null;
+    qs.push({t:ni+'{種類|しゅるい}の{数|かず}の{合計|ごうけい}が'+MOT+(mostq?'{多|おお}い':'{少|すく}ない')+'のは、{何|なん}月かな。',a:bl('','月')});ans.push({a:months[is]+'月',w:'{合計|ごうけい}は'+sums[is]+u});}
+  if(L<=2){if(L===1){var Ts=[10,15,20,25,30].filter(function(t){var c=v[0].filter(function(x){return x>=t;}).length;return c>=1&&c<n&&v[0].indexOf(t)<0;});if(!Ts.length)return null;T=pick(Ts);}
+    var c=v[0].filter(function(x){return x>=T;}).length;if(c<1||c>=n)return null;
+    qs.push({t:items[0]+'が'+T+u+'{以上|いじょう}'+vb+'月は、{何|なん}か月あるかな。',a:bl('','か月')});
+    ans.push({a:c+'か月',w:months.filter(function(m,i){return v[0][i]>=T;}).map(function(m){return m+'月';}).join('、')+(L===2?'（'+T+u+'ちょうどの月も{入|はい}るよ）':'')});}
+  else{var allPos=v[2].every(function(x){return x>0;}),s1=items[2]+'は、1{年間|ねんかん}を{通|とお}して、{毎月|まいつき}'+vb+'。';
+    var s2T=items[3]+'が'+vb+'のは、'+months[bs]+'月から'+months[be]+'月までだった。';
+    var s2F=be<n-2?items[3]+'が'+vb+'のは、'+months[be+1]+'月から'+months[n-1]+'月までだった。':items[3]+'が'+vb+'のは、'+months[0]+'月から'+months[bs-1]+'月までだった。';
+    var up=[],dw=[];for(i=0;i<n;i++){if(v[1][i]>v[0][i])up.push(i);if(v[1][i]<v[0][i])dw.push(i);}
+    function s3(i){return months[i]+'月は、'+items[0]+'より'+items[1]+'の{方|ほう}が{多|おお}く'+vb+'。';}
+    var st=statements([{T:allPos?s1:null,F:allPos?null:s1},{T:s2T,F:s2F},{T:up.length?s3(pick(up)):null,F:dw.length?s3(pick(dw)):null}]);if(!st)return null;
+    qs.push({t:HYO+'から{読|よ}み{取|と}れることとして、{正|ただ}しいものを'+SEL,opts:st.opts,col:true});ans.push({a:'{上|うえ}から'+(st.pos+1)+'{番目|ばんめ}',w:''});}
+  var gi=ri(0,1),type=gt==='line'?'line':gt==='bar'?'bar':pick(['line','bar']);
+  var g=graphQ({type:type,labels:months.map(String),series:[v[gi]],unit:'（'+u+'）',xunit:'（月）',L:L,zero:true});if(!g)return null;
+  qs.push({t:HYO+'の'+items[gi]+'の{数|かず}をグラフにしたよ。{正|ただ}しいグラフを'+SEL,graphs:g.svgs});ans.push({a:g.ans,w:''});
+  return {genre:'{数|かず}の{記録|きろく}',lead:th.lead(pick(NAMES))+HYO+TAIL,
+    tables:[{cap:HYO+th.cap,lbw:th.lbw,head:[''].concat(months.map(function(m){return m+'月';})),rows:items.map(function(nm,j){return [nm+'（'+u+'）'].concat(v[j]);})}],qs:qs,ans:ans};
+}
+
+// ---- ジャンル4：アンケート ----
+var ENQ=[
+  {about:'{料理|りょうり}',items:['カレー','ぎょうざ','オムライス','みそしる','ハンバーグ','やきそば','サラダ'],r1:'{食|た}べたことがある',r2:'{作|つく}ったことがある'},
+  {about:'スポーツ',items:['サッカー','バスケ','テニス','たっきゅう','バドミントン','すいえい','やきゅう'],r1:'{見|み}たことがある',r2:'やったことがある'},
+  {about:'{乗|の}り{物|もの}',items:['ひこうき','しんかんせん','フェリー','モノレール','ロープウェー','バス'],r1:'{知|し}っている',r2:'{乗|の}ったことがある'}];
+function genSurvey(L,gt){
+  var th=pick(ENQ),items=shuffle(th.items).slice(0,5),N=ri(30,36),a=[],b=[],i;
+  for(i=0;i<5;i++){a.push(ri(10,N-2));b.push(ri(3,a[i]));}
+  if(L===2)b[ri(0,4)]=10;
+  if(L===3){var j1=ri(0,4),j2=(j1+ri(1,4))%5;a[j1]=15;if(b[j1]>15)b[j1]=ri(3,15);b[j2]=10;if(a[j2]<16)a[j2]=ri(16,N-2);}
+  var q1='「'+th.r1+'」',q2='「'+th.r2+'」',P='と{答|こた}えた{人|ひと}',NIN='{人|にん}',qs=[],ans=[];
+  var ib=umax(b);if(ib<0)return null;
+  qs.push({t:q2+P+'が'+MOT+'{多|おお}かったのは、{何|なに}かな。',a:bl('','',6)});ans.push({a:items[ib],w:b[ib]+NIN});
+  if(L===1){var k=ri(0,4);if(a[k]===b[k])return null;
+    qs.push({t:items[k]+'を'+q1+P+'は、'+q2+P+'より{何人|なんにん}{多|おお}いかな。',a:bl('',NIN)});ans.push({a:(a[k]-b[k])+NIN,w:a[k]+'−'+b[k]});}
+  else{var ih=umax(a),il=umin(a);if(ih<0||il<0)return null;
+    qs.push({t:q1+P+'が、'+MOT+'{多|おお}いものと'+MOT+'{少|すく}ないものの{差|さ}は、{何人|なんにん}かな。',a:bl('',NIN)});ans.push({a:(a[ih]-a[il])+NIN,w:items[ih]+a[ih]+NIN+'−'+items[il]+a[il]+NIN});}
+  var c,hit;
+  if(L===1){var Ts=[15,20,25].filter(function(t){var x=a.filter(function(y){return y>=t;}).length;return x>=1&&x<=4&&a.indexOf(t)<0;});if(!Ts.length)return null;var T=pick(Ts);
+    hit=items.filter(function(x,i){return a[i]>=T;});c=hit.length;
+    qs.push({t:q1+P+'が'+T+NIN+'{以上|いじょう}だったものは、いくつあるかな。',a:bl('','つ',3)});ans.push({a:c+'つ',w:hit.join('、')});}
+  else if(L===2){hit=items.filter(function(x,i){return b[i]<10;});c=hit.length;if(c<1||c>4)return null;
+    qs.push({t:q2+P+'が10'+NIN+'{未満|みまん}だったものは、いくつあるかな。',a:bl('','つ',3)});ans.push({a:c+'つ',w:hit.join('、')+'（10'+NIN+'ちょうどは{入|はい}らないよ）'});}
+  else{hit=items.filter(function(x,i){return a[i]>=15&&b[i]<10;});c=hit.length;if(c<1||c>4)return null;
+    qs.push({t:q1+P+'が15'+NIN+'{以上|いじょう}で、'+q2+P+'が10'+NIN+'{未満|みまん}だったものは、いくつあるかな。',a:bl('','つ',3)});ans.push({a:c+'つ',w:hit.join('、')+'（15'+NIN+'ちょうどは{入|はい}る、10'+NIN+'ちょうどは{入|はい}らないよ）'});}
+  var two=L>=2,g=graphQ({type:'bar',labels:items,series:two?[a,b]:[a],unit:'（'+NIN+'）',L:L,zero:true,vert:true});if(!g)return null;
+  qs.push({t:two?HYO+'をグラフにしたよ。{正|ただ}しいグラフを'+SEL:HYO+'の'+q1+P+'の{数|かず}をグラフにしたよ。{正|ただ}しいグラフを'+SEL,graphs:g.svgs,legend:two?legendHTML([th.r1,th.r2],'bar'):null});ans.push({a:g.ans,w:''});
+  return {genre:'アンケート',lead:pick(NAMES)+'さんは、クラス'+N+NIN+'{全員|ぜんいん}に、'+th.about+'についてのアンケートをしました。{次|つぎ}の'+HYO+'は、その{結果|けっか}をまとめたものです。'+HYO+TAIL,
+    tables:[{cap:HYO+'アンケートの{結果|けっか}（{単位|たんい}：'+NIN+'）',lbw:42,head:[''].concat(items),rows:[[th.r1].concat(a),[th.r2].concat(b)]}],qs:qs,ans:ans};
+}
+
+// ---- ジャンル5：決められた数と今の数（表2つ） ----
+var KIM='{決|き}められた{数|かず}';
+var STD=[
+  {lead:function(nm){return nm+'さんの{学年|がくねん}では、クラスごとに{文房具|ぶんぼうぐ}を{置|お}いています。'+HYO1+'は、4月にそれぞれのクラスに{配|くば}った{数|かず}（'+KIM+'）です。'+HYO2+'は、9月の{終|お}わりに、それぞれのクラスにある{数|かず}を{調|しら}べたものです。';},
+   items:[['はさみ','{本|ほん}'],['のり','{本|ほん}'],['じょうぎ','{本|ほん}'],['ホチキス','{個|こ}'],['テープ','{個|こ}']],rows:['1{組|くみ}','2{組|くみ}','3{組|くみ}','4{組|くみ}','5{組|くみ}'],rw:'クラス',cap2:'9月の{終|お}わりにある{数|かず}'},
+  {lead:function(nm){return nm+'さんの{学校|がっこう}の{調理室|ちょうりしつ}では、テーブルごとに{食器|しょっき}を{置|お}いています。'+HYO1+'は、それぞれのテーブルに{置|お}く{数|かず}（'+KIM+'）です。'+HYO2+'は、{今|いま}、それぞれのテーブルにある{数|かず}を{調|しら}べたものです。';},
+   items:[['さら','{枚|まい}'],['コップ','{個|こ}'],['スプーン','{本|ほん}'],['フォーク','{本|ほん}'],['おわん','{個|こ}']],rows:['A','B','C','D','E'],rw:'テーブル',cap2:'{今|いま}、テーブルにある{数|かず}'}];
+function genStandard(L,gt){
+  var th=pick(STD),nr=L===1?4:5,ni=L===1?4:5,items=th.items.slice(0,ni),rows=th.rows.slice(0,nr),rw=th.rw,base=[],act=[],i,r;
+  for(i=0;i<ni;i++)base.push(ri(3,12));
+  for(r=0;r<nr;r++){act.push([]);for(i=0;i<ni;i++){var d=rnd()<0.55?0:pick([-3,-2,-1,-1,1,1,2,3]);act[r].push(Math.max(0,base[i]+d));}}
+  function nm(i){return items[i][0];}function un(i){return items[i][1];}
+  function rn(r){return th.rw==='テーブル'?rows[r]+'のテーブル':rows[r];}
+  var qs=[],ans=[];
+  if(L===1){var r0=ri(0,nr-1),i0=ri(0,ni-1);
+    qs.push({t:HYO2+'より、'+rn(r0)+'にある'+nm(i0)+'は、いくつかな。',a:bl('',un(i0))});ans.push({a:act[r0][i0]+un(i0),w:''});
+    var ix=ri(0,ni-1),c=act.filter(function(a){return a[ix]<base[ix];}).length;if(c<1||c>=nr)return null;
+    qs.push({t:nm(ix)+'が、'+KIM+'より{少|すく}ない'+rw+'は、いくつあるかな。',a:bl('','つ',3)});
+    ans.push({a:c+'つ',w:KIM+'は'+base[ix]+un(ix)+'。'+rows.filter(function(x,r){return act[r][ix]<base[ix];}).join('、')});}
+  else{var dc=act.map(function(a){return a.filter(function(x,i){return x!==base[i];}).length;}),ir=umax(dc);if(ir<0)return null;
+    qs.push({t:KIM+'とちがう{数|かず}になっているものが'+MOT+'{多|おお}いのは、どの'+rw+'かな。',a:bl('','',5)});ans.push({a:rn(ir),w:dc[ir]+'{種類|しゅるい}がちがうよ'});
+    var flat=[],cells=[];act.forEach(function(a,r){a.forEach(function(x,i){flat.push(Math.abs(x-base[i]));cells.push([r,i]);});});var ic=umax(flat);if(ic<0)return null;
+    qs.push({t:KIM+'との{差|さ}が'+MOT+'{大|おお}きいのは、どの'+rw+'の、{何|なに}かな。',a:bl(rw+' ','　',4)+bl('もの ','',5)});
+    ans.push({a:rn(cells[ic][0])+'の'+nm(cells[ic][1]),w:'{差|さ}は'+flat[ic]+un(cells[ic][1])});}
+  if(L===1){var iy=ri(0,ni-1),tot=sum(act.map(function(a){return a[iy];}));
+    qs.push({t:nr+'つの'+rw+'にある'+nm(iy)+'は、{全部|ぜんぶ}でいくつかな。',a:bl('',un(iy))});ans.push({a:tot+un(iy),w:act.map(function(a){return a[iy];}).join('＋')});}
+  else if(L===2){var iz=ri(0,ni-1),hit=rows.filter(function(x,r){return act[r][iz]===base[iz];});if(hit.length<1||hit.length>=nr)return null;
+    qs.push({t:nm(iz)+'が、'+KIM+'とちょうど{同|おな}じ'+rw+'は、いくつあるかな。',a:bl('','つ',3)});ans.push({a:hit.length+'つ',w:KIM+'は'+base[iz]+un(iz)+'。'+hit.join('、')});}
+  else{var p=ri(0,ni-1),q=(p+ri(1,ni-1))%ni,hit2=rows.filter(function(x,r){return act[r][p]>=base[p]&&act[r][q]<base[q];});if(hit2.length<1||hit2.length>=nr)return null;
+    qs.push({t:nm(p)+'が'+KIM+'{以上|いじょう}あって、'+nm(q)+'が'+KIM+'{未満|みまん}の'+rw+'は、いくつあるかな。',a:bl('','つ',3)});ans.push({a:hit2.length+'つ',w:hit2.join('、')+'（ちょうど{同|おな}じ{数|かず}は「{以上|いじょう}」に{入|はい}るよ）'});}
+  var ig=ri(0,ni-1),g=graphQ({type:'bar',labels:rows,series:[act.map(function(a){return a[ig];})],unit:'（'+un(ig)+'）',L:L,zero:true});if(!g)return null;
+  qs.push({t:HYO2+'の'+nm(ig)+'の{数|かず}をグラフにしたよ。{正|ただ}しいグラフを'+SEL,graphs:g.svgs});ans.push({a:g.ans,w:''});
+  return {genre:KIM,lead:th.lead(pick(NAMES))+'2つの{表|ひょう}'+TAIL,
+    tables:[{cap:HYO1+KIM,lbw:36,head:[''].concat(items.map(function(x){return x[0];})),rows:[[KIM].concat(base.map(function(b,i){return b+un(i);}))]},
+            {cap:HYO2+th.cap2,lbw:36,head:[''].concat(items.map(function(x){return x[0]+'（'+x[1]+'）';})),rows:rows.map(function(x,r){return [x].concat(act[r]);})}],qs:qs,ans:ans};
+}
+
+var GENRES=[
+  {id:'monthly',name:'{気温|きおん}（{月|つき}ごと）',gen:genMonthly},
+  {id:'towns',name:'{気温|きおん}（2つの{市|し}）',gen:genTwoTowns},
+  {id:'record',name:'{数|かず}の{記録|きろく}',gen:genRecord},
+  {id:'survey',name:'アンケート',gen:genSurvey},
+  {id:'standard',name:'{決|き}められた{数|かず}',gen:genStandard}];
+// ジャンルid・レベル(1〜3)・グラフ('any'|'line'|'bar')から問題を1つ作る
+function makeProblem(id,L,gt){
+  var g=GENRES.filter(function(x){return x.id===id;})[0];
+  for(var i=0;i<3000;i++){var p=g.gen(L,gt);if(p)return p;}
+  return null;
+}
+/*GEN-END*/
+
+// ===== ここから下は画面と印刷 =====
+function R(s){return String(s).replace(/\{([^|{}]+)\|([^{}]+)\}/g,'<ruby>$1<rt>$2</rt></ruby>');}
+function $(id){return document.getElementById(id);}
+var S={genre:'any',level:2,graph:'any',count:1,ans:true};
+try{var sv=JSON.parse(localStorage.getItem('hyoGraphPrint')||'null');if(sv)for(var kk in S)if(kk in sv)S[kk]=sv[kk];}catch(e){}
+function save(){try{localStorage.setItem('hyoGraphPrint',JSON.stringify(S));}catch(e){}}
+
+function pageHTML(p,no,many){
+  var h='<div class="page"><div class="sheet"><div class="in"><div class="nm"><span class="no">'+(many?'No.'+no:'')+'</span><span class="nr"><span>'+R('{名前|なまえ}')+'</span><span class="line"></span></span></div>';
+  h+='<p class="lead" data-e>'+R(p.lead)+'</p>';
+  p.tables.forEach(function(t){
+    h+='<div class="cap" data-e>'+R(t.cap)+'</div><table class="tb"><colgroup><col style="width:'+t.lbw+'mm"></colgroup><tr>'+t.head.map(function(c){return '<th data-e>'+R(c)+'</th>';}).join('')+'</tr>';
+    t.rows.forEach(function(r){h+='<tr>'+r.map(function(c,i){return i===0?'<th data-e>'+R(c)+'</th>':'<td data-e>'+R(c)+'</td>';}).join('')+'</tr>';});
+    h+='</table>';});
+  p.qs.forEach(function(q,i){
+    h+='<div class="q"><div class="qt" data-e>（'+(i+1)+'）'+R(q.t)+(q.a?'　<span class="bl">'+R(q.a)+'</span>':'')+'</div>';
+    if(q.opts)h+='<div class="opts'+(q.col?' col':'')+'">'+q.opts.map(function(o){return '<span data-e>（　）'+R(o)+'</span>';}).join('')+'</div>';
+    if(q.graphs){if(q.legend)h+='<div class="lg">'+q.legend.map(R).join('')+'</div>';
+      h+='<div class="graphs">'+q.graphs.map(function(g){return '<div class="g">'+g+'<div>（　　）</div></div>';}).join('')+'</div>';}
+    h+='</div>';});
+  return h+'</div></div></div>';
+}
+function ansHTML(p,no,many){
+  var h='<div class="page ansp"><div class="sheet"><div class="in"><h2 data-e>'+R('{答|こた}え')+(many?'（No.'+no+'）':'')+'　'+R(p.genre)+'</h2>';
+  p.ans.forEach(function(a,i){h+='<div class="al" data-e>（'+(i+1)+'）<b>'+R(a.a)+'</b>'+(a.w?'<span class="why">'+R(a.w)+'</span>':'')+'</div>';});
+  return h+'</div></div></div>';
+}
+function build(){
+  var order=shuffle(GENRES.map(function(g){return g.id;})),h='',many=S.count>1;
+  for(var i=0;i<S.count;i++){
+    var id=S.genre==='any'?order[i%order.length]:S.genre,p=makeProblem(id,S.level,S.graph);
+    if(!p){say('{問題|もんだい}がうまく{作|つく}れなかったよ。もう{一度|いちど}おしてみてね。');continue;}
+    h+=pageHTML(p,i+1,many);if(S.ans)h+=ansHTML(p,i+1,many);
+  }
+  $('pages').innerHTML=h;
+  [].forEach.call($('pages').querySelectorAll('[data-e]'),function(e){e.setAttribute('contenteditable','true');});
+  layout();fitAll();
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitAll);
+}
+function fitPage(pg){
+  var sh=pg.querySelector('.sheet'),gh=60,gap=9,lh=1.85,n=0;
+  function set(){pg.style.setProperty('--gh',gh+'mm');pg.style.setProperty('--gap',gap+'mm');pg.style.setProperty('--lh',lh.toFixed(2));}
+  function over(){return sh.firstElementChild.offsetHeight>sh.clientHeight-4;}
+  set();
+  while(over()&&n++<80){if(gap>3)gap-=0.5;else if(gh>34)gh-=2;else if(gap>1)gap-=0.5;else if(lh>1.6)lh-=0.05;else break;set();}
+  var w=pg.querySelector('.warn');if(w)w.remove();
+  if(over()){w=document.createElement('div');w.className='warn noprint';w.innerHTML=R('1まいに{入|はい}りきっていないよ。{文|ぶん}を{短|みじか}くするか、{新|あたら}しい{問題|もんだい}を{作|つく}ってみてね。');pg.appendChild(w);}
+}
+function fitAll(){[].forEach.call($('pages').querySelectorAll('.page'),fitPage);layout();}
+function layout(){
+  var pv=$('pv'),sc=$('scaler'),first=$('pages').querySelector('.page');if(!first)return;
+  var pw=first.offsetWidth,avail=pv.clientWidth-16,k=Math.min(1,avail/pw);
+  sc.style.width=pw+'px';sc.style.transform='scale('+k+')';sc.style.marginLeft=Math.max(0,(avail-pw*k)/2)+'px';
+  $('pvh').style.height=(sc.offsetHeight*k)+'px';
+}
+function exportHTML(){
+  var c=$('pages').cloneNode(true);
+  [].forEach.call(c.querySelectorAll('.warn'),function(e){e.remove();});
+  [].forEach.call(c.querySelectorAll('[contenteditable]'),function(e){e.removeAttribute('contenteditable');e.removeAttribute('data-e');});
+  return '<!DOCTYPE html>\n<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=840"><title>表とグラフ プリント</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">'
+    +'<style>'+$('pageCss').textContent+'body{margin:0;background:#ddd}.page{margin:0 auto 6mm}.bar{padding:10px;text-align:center;font-family:\'BIZ UDPGothic\',sans-serif}.bar button{font-family:inherit;font-size:18px;min-height:48px;padding:4px 24px;border-radius:8px;border:2px solid #2f7f99;background:#2f7f99;color:#fff;line-height:1.9}rt{font-size:.5em}</style></head>'
+    +'<body><div class="bar noprint"><button onclick="window.print()">'+R('{印刷|いんさつ}する')+'</button></div>'+c.innerHTML+'</body></html>';
+}
+var msgT=0;
+function say(s){$('msg').innerHTML=R(s);clearTimeout(msgT);msgT=setTimeout(function(){$('msg').innerHTML='';},6000);}
+
+// ---- 設定の部品 ----
+function group(el,opts,key){
+  el.innerHTML='';opts.forEach(function(o){var b=document.createElement('button');b.innerHTML=R(o[1]);if(S[key]===o[0])b.className='on';
+    b.addEventListener('click',function(){S[key]=o[0];save();group(el,opts,key);build();});el.appendChild(b);});
+}
+function stepper(el,key,min,max){
+  el.innerHTML='<button aria-label="へらす">▽</button><input type="number" inputmode="numeric" min="'+min+'" max="'+max+'"><button aria-label="ふやす">△</button>';
+  var inp=el.querySelector('input'),bs=el.querySelectorAll('button');inp.value=S[key];
+  function set(v){v=Math.max(min,Math.min(max,Math.round(v)||min));S[key]=v;inp.value=v;save();build();}
+  bs[0].addEventListener('click',function(){set(S[key]-1);});bs[1].addEventListener('click',function(){set(S[key]+1);});
+  inp.addEventListener('change',function(){set(+inp.value);});
+}
+[].forEach.call(document.querySelectorAll('[data-r]'),function(e){e.innerHTML=R(e.getAttribute('data-r'));});
+group($('gGenre'),[['any','おまかせ']].concat(GENRES.map(function(g){return [g.id,g.name];})),'genre');
+group($('gGraph'),[['any','おまかせ'],['line','{折|お}れ{線|せん}'],['bar','ぼう']],'graph');
+group($('gAns'),[[true,'つける'],[false,'つけない']],'ans');
+stepper($('sLevel'),'level',1,3);stepper($('sCount'),'count',1,10);
+$('bSet').addEventListener('click',function(){$('panel').classList.toggle('hide');layout();});
+$('bNew').addEventListener('click',function(){build();$('pv').scrollTop=0;});
+$('bSave').addEventListener('click',function(){
+  try{var url=URL.createObjectURL(new Blob([exportHTML()],{type:'text/html'})),a=document.createElement('a');
+    a.href=url;a.download='hyo-graph-print.html';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},4000);
+    say('ファイルを{保存|ほぞん}したよ。ブラウザで{開|ひら}いて、{印刷|いんさつ}してね。');
+  }catch(e){say('{保存|ほぞん}できなかったよ。「HTMLをコピーする」を{使|つか}ってみてね。');}
+});
+$('bCopy').addEventListener('click',function(){
+  var ta=document.createElement('textarea');ta.value=exportHTML();ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);
+  ta.focus();ta.select();ta.setSelectionRange(0,ta.value.length);var ok=false;try{ok=document.execCommand('copy');}catch(e){}
+  var html=ta.value;ta.remove();
+  if(ok){say('HTMLをコピーしたよ。');return;}
+  try{navigator.clipboard.writeText(html).then(function(){say('HTMLをコピーしたよ。');},function(){say('コピーできなかったよ。');});}catch(e){say('コピーできなかったよ。');}
+});
+$('pages').addEventListener('input',function(e){var pg=e.target.closest&&e.target.closest('.page');if(pg){fitPage(pg);layout();}});
+window.addEventListener('resize',layout);
+
+// ---- iPad向け：ズームなどの標準動作を止める ----
+document.addEventListener('gesturestart',function(e){e.preventDefault();});
+document.addEventListener('touchmove',function(e){if(e.touches.length>1)e.preventDefault();},{passive:false});
+var lastTap=0;
+document.addEventListener('touchend',function(e){
+  var now=Date.now(),t=e.target,free=t.closest&&t.closest('button,input,[contenteditable]');
+  if(!free&&now-lastTap<300)e.preventDefault();lastTap=now;
+},{passive:false});
+build();
+</script>
+</body>
+</html>
