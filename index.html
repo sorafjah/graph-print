@@ -142,8 +142,9 @@ function svgT(x,y,str,o){
 function niceScale(min,max,zero){
   if(zero&&min>0)min=0;var steps=[1,2,5,10,20,50];
   for(var k=0;k<steps.length;k++){var s=steps[k],lo=Math.floor(min/s)*s,hi=Math.ceil(max/s)*s;if(hi===lo)hi+=s;
+    if(hi<=max)hi+=s;if(lo>=min&&min<0)lo-=s;
     if((hi-lo)/s<=8){if((hi-lo)/s<4)hi+=s;return {lo:lo,hi:hi,step:s};}}
-  return {lo:0,hi:Math.ceil(max/100)*100,step:100};
+  return {lo:0,hi:(Math.floor(max/100)+1)*100,step:100};
 }
 function chart(o){
   var vert=o.vert,W=200,H=vert?196:152,L=26,Rm=o.xunit?20:8,Tp=17,B=vert?62:22;
@@ -374,7 +375,7 @@ var STD=[
 function genStandard(L,gt){
   var th=pick(STD),nr=L===1?4:5,ni=L===1?4:5,items=th.items.slice(0,ni),rows=th.rows.slice(0,nr),rw=th.rw,base=[],act=[],i,r;
   for(i=0;i<ni;i++)base.push(ri(3,12));
-  for(r=0;r<nr;r++){act.push([]);for(i=0;i<ni;i++){var d=rnd()<0.55?0:pick([-3,-2,-1,-1,1,1,2,3]);act[r].push(Math.max(0,base[i]+d));}}
+  for(r=0;r<nr;r++){act.push([]);for(i=0;i<ni;i++){var d=rnd()<0.3?0:pick([-3,-2,-2,-1,-1,1,1,2,2,3]);act[r].push(Math.max(0,base[i]+d));}}
   function nm(i){return items[i][0];}function un(i){return items[i][1];}
   function rn(r){return th.rw==='テーブル'?rows[r]+'のテーブル':rows[r];}
   var qs=[],ans=[];
@@ -394,7 +395,9 @@ function genStandard(L,gt){
     qs.push({t:nm(iz)+'が、'+KIM+'とちょうど{同|おな}じ'+rw+'は、いくつありますか。',a:bl('','つ',3)});ans.push({a:hit.length+'つ',w:KIM+'は'+base[iz]+un(iz)+'。'+hit.join('、')});}
   else{var p=ri(0,ni-1),q=(p+ri(1,ni-1))%ni,hit2=rows.filter(function(x,r){return act[r][p]>=base[p]&&act[r][q]<base[q];});if(hit2.length<1||hit2.length>=nr)return null;
     qs.push({t:nm(p)+'が'+KIM+'{以上|いじょう}あって、'+nm(q)+'が'+KIM+'{未満|みまん}の'+rw+'は、いくつありますか。',a:bl('','つ',3)});ans.push({a:hit2.length+'つ',w:hit2.join('、')+'（ちょうど{同|おな}じ{数|かず}は「{以上|いじょう}」に{入|はい}ります）'});}
-  var ig=ri(0,ni-1),g=graphQ({type:'bar',labels:rows,series:[act.map(function(a){return a[ig];})],unit:'（'+un(ig)+'）',L:L,zero:true});if(!g)return null;
+  for(i=0;i<ni;i++){var same=act.filter(function(a){return a[i]===base[i];}).length;if(same>2||same===0&&rnd()<0.5)return null;}
+  var gc=[];for(i=0;i<ni;i++){var cv=act.map(function(a){return a[i];});if(cv.filter(function(x,k){return cv.indexOf(x)===k;}).length>=Math.min(4,nr))gc.push(i);}if(!gc.length)return null;
+  var ig=pick(gc),g=graphQ({type:'bar',labels:rows,series:[act.map(function(a){return a[ig];})],unit:'（'+un(ig)+'）',L:L,zero:true});if(!g)return null;
   qs.push({t:HYO2+'の'+nm(ig)+'の{数|かず}をグラフにしました。<br>{正|ただ}しいグラフを'+SEL,graphs:g.svgs});ans.push({a:g.ans,w:''});
   return {genre:KIM,lead:th.lead(pick(NAMES))+'2つの{表|ひょう}'+TAIL,
     tables:[{cap:HYO1+KIM,lbw:36,head:[''].concat(items.map(function(x){return x[0];})),rows:[[KIM].concat(base.map(function(b,i){return b+un(i);}))]},
